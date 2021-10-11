@@ -39,8 +39,6 @@ class ViewController: UIViewController {
                 display.text = "0"
             case ".":
                 display.text = "0."
-            case .hasPrefix("--"):
-                display.text = newValue.suffix()
             default:
                 display.text = newValue;
             }
@@ -52,14 +50,15 @@ class ViewController: UIViewController {
         let buttonTitle = sender.titleLabel!.text!
         
         if(!inputing){
-            if(selectedBinOp == nil){
-                // no binary operator is selected, then current input should cover the previous
-                calculator.popValue()
-            }else{
-                calculator.pushOp(buttonTitle)
-            }
+//            if(selectedBinOp == nil){
+//                // no binary operator is selected, then current input should cover the previous
+//                calculator.popValue()
+//            }else{
+//                calculator.pushOp(buttonTitle)
+//            }
             inputing = true
             displayText = buttonTitle
+            
         }else if(buttonTitle != "." || hasDot == false){
             displayText = displayText + buttonTitle
         }
