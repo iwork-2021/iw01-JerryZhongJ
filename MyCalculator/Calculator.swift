@@ -9,236 +9,69 @@ import UIKit
 
 class Calculator: NSObject {
     private var mem:Double = 0.0
-    private var valueStack:[Double?] = []
+    private var valueStack:[Double] = [0.0]
     private var operatorStack:[Operator] = []
     
     private enum Operator{
-        case UnaryOperator((Double?)->Double?)
-        case BinaryOperator((Double?, Double?)->Double?, Int)
-        case End
+        case NullaryOperator(()->Double)
+        case UnaryOperator((Double)->Double)
+        case BinaryOperator((Double, Double)->Double, Int)
         case LeftBracket
         case RightBracket
+        case End
+        case AllClear
     }
     private var operators:[String:Operator] = [:]
     override init(){
         super.init()
         operators = [
             "=": Operator.End,
-            "+": Operator.BinaryOperator({
-                if let op1 = $0, let op2 = $1{
-                    return op1 + op2
-                }else{
-                    return nil
-                }}, 1),
-            "-":Operator.BinaryOperator({
-                if let op1 = $0, let op2 = $1{
-                    return op1 - op2
-                }else{
-                    return nil
-                }}, 1),
-            "✕":Operator.BinaryOperator({if let op1 = $0, let op2 = $1{
-                    return op1 * op2
-                }else{
-                    return nil
-                }}, 2),
-            "÷":Operator.BinaryOperator({
-                if let op1 = $0, let op2 = $1{
-                    return op1 / op2
-                }else{
-                    return nil
-                }}, 2),
-            "%":Operator.UnaryOperator({
-                if let op = $0{
-                return op / 100
-            }else{
-                return nil
-            }}),
+            "+": Operator.BinaryOperator({$0 + $1}, 1),
+            "-":Operator.BinaryOperator({$0 - $1}, 1),
+            "✕":Operator.BinaryOperator({$0 * $1}, 2),
+            "÷":Operator.BinaryOperator({$0 / $1}, 2),
+            "%":Operator.UnaryOperator({$0 / 100}),
             "(":Operator.LeftBracket,
             ")":Operator.RightBracket,
-            "mc":Operator.UnaryOperator({
-                self.mem = 0.0
-                return $0
-            }),
-            "m+":Operator.UnaryOperator({
-                self.mem += ($0 ?? 0.0)
-                return $0
-            }),
-            "m-":Operator.UnaryOperator({
-                self.mem  -= ($0 ?? 0.0)
-                return $0
-            }),
-            "mr":Operator.UnaryOperator({
-                _ in
-                return self.mem
-            }),
-            "x^2":Operator.UnaryOperator({
-                if let op = $0{
-                    return op * op
-                }else{
-                    return nil
-                }}),
-            "x^3":Operator.UnaryOperator({
-                if let op = $0{
-                    return op * op * op
-                }else{
-                    return nil
-                }}),
-            "e^x":Operator.UnaryOperator({
-                if let op = $0{
-                    return exp(op)
-                }else{
-                    return nil
-                }}),
-            "10^x":Operator.UnaryOperator({
-                if let op = $0{
-                    return pow(10, op)
-                }else{
-                    return nil
-                }}),
-            "x^y":Operator.BinaryOperator({
-                if let op1 = $0, let op2 = $1{
-                    if(op2 < 0 && op1 == 0){
-                        return nil
-                    }
-                    return pow(op1, op2)
-                }else{
-                    return nil
-                }}, 4),
-            "1/x":Operator.UnaryOperator({
-                if let op = $0{
-                    if(op == 0){
-                        return nil
-                    }
-                    return 1 / op
-                }else{
-                    return nil
-                }}),
-            "2√x":Operator.UnaryOperator({
-                if let op = $0{
-                    if(op < 0){
-                        return nil
-                    }
-                    return sqrt(op)
-                }else{
-                    return nil
-                }}),
-            "3√x":Operator.UnaryOperator({
-                if let op = $0{
-                    return cbrt(op)
-                }else{
-                    return nil
-                }}),
-            "y√x":Operator.BinaryOperator({
-                if let op1 = $0, let op2 = $1{
-                    if(op1 < 0 || op2 == 0){
-                        return nil
-                    }
-                    return pow(op1, 1 / op2)
-                }else{
-                    return nil
-                }}, 4
-                                         ),
-            "ln":Operator.UnaryOperator({
-                if let op = $0{
-                    if(op <= 0){
-                        return nil
-                    }
-                    return log(op)
-                }else{
-                    return nil
-                }}),
-            "log10":Operator.UnaryOperator({
-                if let op = $0{
-                    if(op <= 0){
-                        return nil
-                    }
-                    return log10(op)
-                }else{
-                    return nil
-                }}),
+            "mc":Operator.UnaryOperator({ self.mem = 0.0; return $0 }),
+            "m+":Operator.UnaryOperator({self.mem += $0; return $0 }),
+            "m-":Operator.UnaryOperator({self.mem  -= $0; return $0}),
+            "mr":Operator.NullaryOperator({self.mem}),
+            "x²":Operator.UnaryOperator({$0 * $0}),
+            "x³":Operator.UnaryOperator({$0 * $0 * $0}),
+            "eˣ":Operator.UnaryOperator({exp($0)}),
+            "10ˣ":Operator.UnaryOperator({pow(10, $0)}),
+            "xʸ":Operator.BinaryOperator({pow($0, $1)}, 4),
+            "1/x":Operator.UnaryOperator({1 / $0}),
+            "²√x":Operator.UnaryOperator({sqrt($0)}),
+            "³√x":Operator.UnaryOperator({cbrt($0)}),
+            "ʸ√x":Operator.BinaryOperator({pow($0, 1 / $1)}, 4),
+            "ln":Operator.UnaryOperator({log($0)}),
+            "log₁₀":Operator.UnaryOperator({log10($0)}),
             "x!":Operator.UnaryOperator({
-                if let op = $0{
-                    let toInt = floor(op)
-                    if toInt != op || toInt < 0{
-                        return nil
+                if !$0.isNaN {
+                    let toInt = floor($0)
+                    if toInt != $0 || toInt < 0{
+                        return Double.nan
                     }
                     return self.fact(Int(toInt))
                 }else{
-                    return nil
+                    return Double.nan
                 }
             }),
-            "sin":Operator.UnaryOperator({
-                if let op = $0{
-                    return sin(op)
-                }else{
-                    return nil
-                }
-            }),
-            "cos":Operator.UnaryOperator({
-                if let op = $0{
-                    return cos(op)
-                }else{
-                    return nil
-                }
-            }),
-            "tan":Operator.UnaryOperator({
-                if let op = $0{
-                    return tan(op)
-                }else{
-                    return nil
-                }
-            }),
-            "e":Operator.UnaryOperator({
-                _ in
-                return M_E
-            }),
-            "EE":Operator.BinaryOperator({
-                if let op1 = $0, let op2 = $1{
-                    return op1 * pow(10, op2)
-                }else{
-                    return nil
-                }
-            }, 3),
-            "sinh":Operator.UnaryOperator({
-                if let op = $0{
-                    return sinh(op)
-                }else {
-                    return nil
-                }
-            }),
-            "cosh":Operator.UnaryOperator({
-                if let op = $0{
-                    return cosh(op)
-                }else {
-                    return nil
-                }
-            }),
-            "tanh":Operator.UnaryOperator({
-                if let op = $0{
-                    return tanh(op)
-                }else {
-                    return nil
-                }
-            }),
-            "π":Operator.UnaryOperator({
-                _ in
-                return Double.pi
-            }),
-            "Rand":Operator.UnaryOperator({
-                _ in
-                return Double.random(in: 0.0 ... 1.0)
-            }),
-            "C":Operator.UnaryOperator({
-                _ in
-                return 0
-            }),
-            "+/-":Operator.UnaryOperator({
-                if let op = $0{
-                    return -op
-                }else{
-                    return nil
-                }
-            })
+            "sin":Operator.UnaryOperator({sin($0)}),
+            "cos":Operator.UnaryOperator({cos($0)}),
+            "tan":Operator.UnaryOperator({tan($0)}),
+            "e":Operator.NullaryOperator({M_E}),
+            "EE":Operator.BinaryOperator({$0 * pow(10, $1)}, 3),
+            "sinh":Operator.UnaryOperator({sinh($0)}),
+            "cosh":Operator.UnaryOperator({cosh($0)}),
+            "tanh":Operator.UnaryOperator({tanh($0)}),
+            "π":Operator.NullaryOperator({Double.pi}),
+            "Rand":Operator.NullaryOperator({Double.random(in: 0.0 ... 1.0)}),
+            "C":Operator.NullaryOperator({0}),
+            "±":Operator.UnaryOperator({-$0}),
+            "AC":Operator.AllClear
             
         ]
     }
@@ -250,37 +83,40 @@ class Calculator: NSObject {
         return Double(res)
     }
     
-    func pushValue(value: Double){
+    func pushValue(_ value: Double){
+        print("push value: "+String(value))
         valueStack.append(value);
     }
-//    func pushOp(_ operator: String)->Double?{
-//
-//    }
-    private func pushOpInStack(_ opName:String, valueStack:inout  [Double?], operatorStack:inout [Operator])->Double?{
+
+    private func performPushOp(_ opName:String, valueStack:inout  [Double], operatorStack:inout [Operator])->Double{
         // all operators should be covered, if not, add it
         
         let op = operators[opName]!
         switch(op){
+        case .NullaryOperator(let nop):
+            // nullary operator output a constant that covers current value
+            valueStack.popLast()
+            valueStack.append(nop())
+            
         case .UnaryOperator(let uop):
             // push value before push op!
-            let op = valueStack.popLast()!;
-            valueStack.append(uop(op))
+            let op = valueStack.popLast()
+            valueStack.append(uop(op!))
+            
         case .BinaryOperator(let bop, let level):
-        iterate:while(!operatorStack.isEmpty){
+        popLoop:while(!operatorStack.isEmpty){
                 let top = operatorStack.last!
                 switch(top){
                 case .LeftBracket:
                     // stop here
-                    break iterate
+                    break popLoop
                 case .BinaryOperator(let topOp, let topLevel):
                     if(topLevel >= level){
-                        let op1 = valueStack.popLast()!;
-                        let op2 = valueStack.popLast()!;
-                        valueStack.append(topOp(op1, op2));
+                        performBinOperation(topOp, &valueStack)
                         operatorStack.popLast();
                     }else{
                         // for example bop == "*" and topOp == "+"
-                        break iterate
+                        break popLoop
                     }
                 default:
                     // should not happen
@@ -288,59 +124,70 @@ class Calculator: NSObject {
                 }
             }
             operatorStack.append(op)
+            
         case .LeftBracket:
             operatorStack.append(op)
             return valueStack.last!
+            
         case .End:
-        iterate:while(!operatorStack.isEmpty){
+            while(!operatorStack.isEmpty){
                 let top = operatorStack.last!
                 switch(top){
                 case .LeftBracket:
+                    // ignore left brackets
                     operatorStack.popLast();
                 case .BinaryOperator(let topOp, let topLevel):
-                    let op1 = valueStack.popLast()!;
-                    let op2 = valueStack.popLast()!;
-                    valueStack.append(topOp(op1, op2));
+                    performBinOperation(topOp, &valueStack)
                     operatorStack.popLast();
                 default:
                     // should not happen
                     assert(false);
                 }
         }
+            
         case .RightBracket:
-        iterate:while(!operatorStack.isEmpty){
+        popLoop:while(!operatorStack.isEmpty){
                 let top = operatorStack.last!
                 switch(top){
                 case .LeftBracket:
+                    // stop here
                     operatorStack.popLast();
-                    break iterate
+                    break popLoop
                 case .BinaryOperator(let topOp, let topLevel):
-                    let op1 = valueStack.popLast()!;
-                    let op2 = valueStack.popLast()!;
-                    valueStack.append(topOp(op1, op2));
+                    performBinOperation(topOp, &valueStack)
                     operatorStack.popLast();
                 default:
                     // should not happen
                     assert(false);
                 }
             }
+            
+        case .AllClear:
+            operatorStack.removeAll()
+            valueStack.removeAll();
+            valueStack.append(0.0)
         }
-        
+        print(valueStack)
         return valueStack.last!
     }
-    func tryPushOp(_ opName: String)->Double?{
+    private func performBinOperation(_ bop: (Double, Double)->Double, _ valueStack: inout [Double]){
+        // the top is right operand and the top but second is left operand
+        let op2 = valueStack.popLast()!;
+        let op1 = valueStack.popLast()!;
+        valueStack.append(bop(op1, op2));
+    }
+    func tryPushOp(_ opName: String)->Double{
         // should be called only when binary operator is pressed
+        print("try push op: "+opName)
         var tmpValueStack = self.valueStack
         var tmpOperatorStack = self.operatorStack
-        return pushOpInStack(opName, valueStack: &tmpValueStack, operatorStack: &tmpOperatorStack)
+        return performPushOp(opName, valueStack: &tmpValueStack, operatorStack: &tmpOperatorStack)
     }
-    func pushOp(_ opName:String)->Double?{
-        return pushOpInStack(opName, valueStack: &self.valueStack, operatorStack: &self.operatorStack)
+    func pushOp(_ opName:String)->Double{
+        print("push op: " + opName)
+        return performPushOp(opName, valueStack: &self.valueStack, operatorStack: &self.operatorStack)
     }
     func popValue(){
         valueStack.popLast()
-    }
-    func clear(){
-        
     }
 }
