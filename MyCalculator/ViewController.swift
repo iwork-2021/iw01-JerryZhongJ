@@ -35,7 +35,17 @@ class ViewController: UIViewController {
                 }
                 
             }else{
+                // “Clear” is available whenever there is a number except “”
                 cac.setTitle("C", for: UIControl.State.normal)
+                if(oldValue == false){
+                    if(selectedBinOp == nil){
+                        // no binary operator is selected, then current input should cover the previous
+                        calculator.popValue()
+                    }else{
+                        calculator.pushOp(selectedBinOp!.titleLabel!.text!)
+                        selectedBinOp = nil;
+                    }
+                }
             }
         }
     }
@@ -60,8 +70,8 @@ class ViewController: UIViewController {
     }
     var displayValue:Double{
         get{
-            print("current display text: "+displayText)
-            print(Double(displayText))
+//            print("current display text: "+displayText)
+//            print(Double(displayText))
             return (Double(displayText) ?? Double.nan)
         }
         set{
@@ -100,14 +110,7 @@ class ViewController: UIViewController {
     @IBAction func numberAction(_ sender: UIButton) {
         let buttonTitle = sender.titleLabel!.text!
         
-        if(!inputing){
-            if(selectedBinOp == nil){
-                // no binary operator is selected, then current input should cover the previous
-                calculator.popValue()
-            }else{
-                calculator.pushOp(selectedBinOp!.titleLabel!.text!)
-                selectedBinOp = nil;
-            }
+        if(!inputing){  
             inputing = true
             displayText = buttonTitle
             
@@ -127,11 +130,15 @@ class ViewController: UIViewController {
     
     @IBAction func otherOpAction(_ sender: UIButton){
         inputing = false
+        if(sender.titleLabel!.text! == "(" && selectedBinOp != nil){
+            calculator.pushOp(selectedBinOp!.titleLabel!.text!)
+        }
         selectedBinOp = nil
         displayValue = calculator.pushOp(sender.titleLabel!.text!)
         if(sender.titleLabel!.text! == "C"){
             cac.setTitle("AC", for: UIControl.State.normal)
         }
+        
     }
     
 }
