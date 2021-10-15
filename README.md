@@ -63,7 +63,7 @@ Controller主要完成以下任务：
 无论`pushOp`还是`tryPushOp`都会返回运算后值栈的栈顶数字，这表示运算或模拟运算的结果。
 
 ## 成果展示
-[![](./images/capture)(./images/result)
+[![](./images/capture)](./images/result)
 
 
 

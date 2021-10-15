@@ -127,7 +127,6 @@ class Calculator: NSObject {
             
         case .LeftBracket:
             operatorStack.append(op)
-            valueStack.append(0.0)
 
         case .End:
             while(!operatorStack.isEmpty){

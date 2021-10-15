@@ -132,6 +132,7 @@ class ViewController: UIViewController {
         inputing = false
         if(sender.titleLabel!.text! == "(" && selectedBinOp != nil){
             calculator.pushOp(selectedBinOp!.titleLabel!.text!)
+            calculator.pushValue(0.0)
         }
         selectedBinOp = nil
         displayValue = calculator.pushOp(sender.titleLabel!.text!)
