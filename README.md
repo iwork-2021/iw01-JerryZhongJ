@@ -1,7 +1,7 @@
 [![Open in Visual Studio Code](https://classroom.github.com/assets/open-in-vscode-f059dc9a6f8d3a56e377f745f24479a46679e63a5d9fe6f495e02850cd0d8118.svg)](https://classroom.github.com/online_ide?assignment_repo_id=5895840&assignment_repo_type=AssignmentRepo)
 # 计算器
 ## 界面布局
-![](./images/layout.png)
+![](images/layout.png)
 整个界面由Vertical Stack View分为上面的展示区和下面的按钮区。  
 按钮区是名为`buttons`的Horizontal Stack View，分为`Extend`按钮和`Basic`按钮。`Basic`按钮无论横屏竖屏都存在，而`Extend`按钮在竖屏状态下是隐藏的，只有在横屏状态下显示。  
 除此之外，constraints也会随着屏幕朝向改变，总的来说就是让竖屏下按钮更松散一点，在横屏下更紧凑一点。
@@ -63,7 +63,7 @@ Controller主要完成以下任务：
 无论`pushOp`还是`tryPushOp`都会返回运算后值栈的栈顶数字，这表示运算或模拟运算的结果。
 
 ## 成果展示
-[![](./images/capture)](./images/result)
+[![](images/capture.png)](images/result.mov)
 
 
 
